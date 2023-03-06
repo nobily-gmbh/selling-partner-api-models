@@ -22,7 +22,7 @@ namespace Amazon.SellingPartnerAPIAATests
         {
             request = new RestRequest(TestResourcePath, Method.GET);
 
-            AWSAuthenticationCredentials authenticationCredentials = new AWSAuthenticationCredentials
+            var authenticationCredentials = new AWSAuthenticationCredentials
             {
                 AccessKeyId = TestAccessKeyId,
                 SecretKey = TestSecretKey,
@@ -36,11 +36,11 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestSignRequest()
         {
-            DateTime signingDate = DateTime.UtcNow;
-            string expectedHashedCanonicalRequest = "b7a5ea4c3179fcebed77f19ccd7d85795d4b7a1810709b55fa7ad3fd79ab6adc";
-            string expectedSignedHeaders = "testSignedHeaders";
-            string expectedSignature = "testSignature";
-            string expectedStringToSign = "testStringToSign";
+            var signingDate = DateTime.UtcNow;
+            var expectedHashedCanonicalRequest = "b7a5ea4c3179fcebed77f19ccd7d85795d4b7a1810709b55fa7ad3fd79ab6adc";
+            var expectedSignedHeaders = "testSignedHeaders";
+            var expectedSignature = "testSignature";
+            var expectedStringToSign = "testStringToSign";
             mockAWSSignerHelper.Setup(signerHelper => signerHelper.InitializeHeaders(request, TestHost))
                                .Returns(signingDate);
             mockAWSSignerHelper.Setup(signerHelper => signerHelper.ExtractCanonicalURIParameters(request))
@@ -60,7 +60,7 @@ namespace Amazon.SellingPartnerAPIAATests
                                       signingDate, TestSecretKey, TestRegion))
                                .Returns(expectedSignature);
 
-            IRestRequest actualRestRequest = sigV4SignerUnderTest.Sign(request, TestHost);
+            var actualRestRequest = sigV4SignerUnderTest.Sign(request, TestHost);
 
             mockAWSSignerHelper.Verify(signerHelper => signerHelper.InitializeHeaders(request, TestHost));
             mockAWSSignerHelper.Verify(signerHelper => signerHelper.ExtractCanonicalURIParameters(request));

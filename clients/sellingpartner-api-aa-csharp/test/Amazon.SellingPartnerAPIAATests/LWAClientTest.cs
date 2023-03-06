@@ -42,7 +42,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void InitializeLWAAuthorizationCredentials()
         {
-            LWAClient lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
             Assert.Equal(LWAAuthorizationCredentials, lwaClientUnderTest.LWAAuthorizationCredentials);
         }
 
@@ -50,7 +50,7 @@ namespace Amazon.SellingPartnerAPIAATests
         public void MakeRequestFromMeta()
         {
             IRestRequest request = new RestRequest();
-            LWAAccessTokenRequestMeta expectedLWAAccessTokenRequestMeta = new LWAAccessTokenRequestMeta()
+            var expectedLWAAccessTokenRequestMeta = new LWAAccessTokenRequestMeta()
             {
                 ClientSecret = "expectedSecret",
                 ClientId = "expectedClientId",
@@ -65,15 +65,15 @@ namespace Amazon.SellingPartnerAPIAATests
             mockLWAAccessTokenRequestMetaBuilder.Setup(builder => builder.Build(LWAAuthorizationCredentials))
                 .Returns(expectedLWAAccessTokenRequestMeta);
 
-            LWAClient lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
             lwaClientUnderTest.RestClient = mockRestClient.Object;
             lwaClientUnderTest.LWAAccessTokenRequestMetaBuilder = mockLWAAccessTokenRequestMetaBuilder.Object;
             lwaClientUnderTest.GetAccessToken();
 
-            Parameter requestBody = request.Parameters
+            var requestBody = request.Parameters
                 .FirstOrDefault(parameter => parameter.Type.Equals(ParameterType.RequestBody));
 
-            JObject jsonRequestBody = JObject.Parse(requestBody.Value.ToString());
+            var jsonRequestBody = JObject.Parse(requestBody.Value.ToString());
 
             Assert.Equal(Method.POST, request.Method);
             Assert.Equal(TestEndpoint.AbsolutePath, request.Resource);
@@ -92,10 +92,10 @@ namespace Amazon.SellingPartnerAPIAATests
                 .Callback((IRestRequest req) => { request = req; })
                 .Returns(Response);
 
-            LWAClient lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
             lwaClientUnderTest.RestClient = mockRestClient.Object;
 
-            string accessToken = lwaClientUnderTest.GetAccessToken();
+            var accessToken = lwaClientUnderTest.GetAccessToken();
 
             Assert.Equal("Azta|foo", accessToken);
         }
@@ -116,10 +116,10 @@ namespace Amazon.SellingPartnerAPIAATests
                .Callback((IRestRequest req) => { request = req; })
                .Returns(response);
 
-            LWAClient lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
             lwaClientUnderTest.RestClient = mockRestClient.Object;
 
-            SystemException systemException = Assert.Throws<SystemException>(() => lwaClientUnderTest.GetAccessToken());
+            var systemException = Assert.Throws<SystemException>(() => lwaClientUnderTest.GetAccessToken());
             Assert.IsType<IOException>(systemException.GetBaseException());
         }
 
@@ -139,7 +139,7 @@ namespace Amazon.SellingPartnerAPIAATests
                .Callback((IRestRequest req) => { request = (RestRequest)req; })
                .Returns(response);
 
-            LWAClient lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
             lwaClientUnderTest.RestClient = mockRestClient.Object;
 
             Assert.Throws<SystemException>(() => lwaClientUnderTest.GetAccessToken());

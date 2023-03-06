@@ -21,7 +21,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void LWAAuthorizationCredentialsWithoutScopesBuildsSellerTokenRequestMeta()
         {
-            LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials()
+            var lwaAuthorizationCredentials = new LWAAuthorizationCredentials()
             {
                 ClientId = TestClientId,
                 ClientSecret = TestClientSecret,
@@ -29,7 +29,7 @@ namespace Amazon.SellingPartnerAPIAATests
                 RefreshToken = TestRefreshToken
             };
 
-            LWAAccessTokenRequestMeta expected = new LWAAccessTokenRequestMeta()
+            var expected = new LWAAccessTokenRequestMeta()
             {
                 ClientId = TestClientId,
                 ClientSecret = TestClientSecret,
@@ -38,7 +38,7 @@ namespace Amazon.SellingPartnerAPIAATests
                 Scope = null
             };
 
-            LWAAccessTokenRequestMeta actual = lwaAccessTokenRequestMetaBuilderUnderTest.Build(lwaAuthorizationCredentials);
+            var actual = lwaAccessTokenRequestMetaBuilderUnderTest.Build(lwaAuthorizationCredentials);
 
             Assert.Equal(expected, actual);
         }
@@ -46,7 +46,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void LWAAuthorizationCredentialsWithScopesBuildsSellerlessTokenRequestMeta()
         {
-            LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials()
+            var lwaAuthorizationCredentials = new LWAAuthorizationCredentials()
             {
                 ClientId = TestClientId,
                 ClientSecret = TestClientSecret,
@@ -54,7 +54,7 @@ namespace Amazon.SellingPartnerAPIAATests
                 Scopes = new List<string>() { ScopeConstants.ScopeMigrationAPI, ScopeConstants.ScopeNotificationsAPI }
             };
 
-            LWAAccessTokenRequestMeta expected = new LWAAccessTokenRequestMeta()
+            var expected = new LWAAccessTokenRequestMeta()
             {
                 ClientId = TestClientId,
                 ClientSecret = TestClientSecret,
@@ -63,7 +63,7 @@ namespace Amazon.SellingPartnerAPIAATests
                 RefreshToken = null
             };
 
-            LWAAccessTokenRequestMeta actual = lwaAccessTokenRequestMetaBuilderUnderTest.Build(lwaAuthorizationCredentials);
+            var actual = lwaAccessTokenRequestMetaBuilderUnderTest.Build(lwaAuthorizationCredentials);
 
             Assert.Equal(expected, actual);
         }
