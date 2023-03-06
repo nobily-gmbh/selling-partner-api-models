@@ -1,9 +1,13 @@
 ﻿using System;
-using Xunit;
-using RestSharp;
-using Amazon.SellingPartnerAPIAA;
 using System.Text;
+
+using Amazon.SellingPartnerAPIAA;
+
 using Moq;
+
+using RestSharp;
+
+using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests
 {

@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
+
 using Newtonsoft.Json;
 
 namespace Amazon.SellingPartnerAPIAA

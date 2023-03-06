@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using Amazon.SellingPartnerAPIAA;
+
 using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests

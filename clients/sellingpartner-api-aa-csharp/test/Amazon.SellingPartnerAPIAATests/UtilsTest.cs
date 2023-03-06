@@ -1,8 +1,9 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
-using Xunit;
+
 using Amazon.SellingPartnerAPIAA;
+
+using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests
 {

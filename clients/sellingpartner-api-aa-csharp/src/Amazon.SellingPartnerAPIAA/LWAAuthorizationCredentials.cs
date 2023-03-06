@@ -36,4 +36,3 @@ namespace Amazon.SellingPartnerAPIAA
         public List<string> Scopes { get; set; }
     }
 }
-

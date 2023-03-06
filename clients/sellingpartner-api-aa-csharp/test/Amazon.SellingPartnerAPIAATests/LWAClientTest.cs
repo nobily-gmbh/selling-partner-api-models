@@ -2,10 +2,15 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using Moq;
-using Newtonsoft.Json.Linq;
-using RestSharp;
+
 using Amazon.SellingPartnerAPIAA;
+
+using Moq;
+
+using Newtonsoft.Json.Linq;
+
+using RestSharp;
+
 using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests

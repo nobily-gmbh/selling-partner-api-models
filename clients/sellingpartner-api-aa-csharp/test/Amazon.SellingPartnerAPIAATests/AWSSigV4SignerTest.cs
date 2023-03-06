@@ -1,8 +1,12 @@
-﻿using Moq;
-using Xunit;
-using RestSharp;
+﻿using System;
+
 using Amazon.SellingPartnerAPIAA;
-using System;
+
+using Moq;
+
+using RestSharp;
+
+using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests
 {

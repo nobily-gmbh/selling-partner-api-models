@@ -1,4 +1,5 @@
 ﻿using System;
+
 namespace Amazon.SellingPartnerAPIAA
 {
     public class SigningDateHelper : IDateHelper

@@ -1,6 +1,6 @@
-﻿using System.Text;
+﻿using System.Globalization;
 using System.Security.Cryptography;
-using System.Globalization;
+using System.Text;
 
 namespace Amazon.SellingPartnerAPIAA
 {

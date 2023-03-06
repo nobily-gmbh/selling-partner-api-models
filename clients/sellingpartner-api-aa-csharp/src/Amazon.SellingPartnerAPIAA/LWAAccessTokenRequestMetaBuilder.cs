@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Amazon.SellingPartnerAPIAA
+﻿namespace Amazon.SellingPartnerAPIAA
 {
     public class LWAAccessTokenRequestMetaBuilder
     {
