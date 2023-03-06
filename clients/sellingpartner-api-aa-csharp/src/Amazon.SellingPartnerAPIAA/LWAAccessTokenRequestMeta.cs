@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Amazon.SellingPartnerAPIAA
@@ -30,6 +30,16 @@ namespace Amazon.SellingPartnerAPIAA
                 this.ClientId == other.ClientId &&
                 this.ClientSecret == other.ClientSecret &&
                 this.Scope == other.Scope;
+        }
+
+        [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
+        public override int GetHashCode()
+        {
+            return GrantType?.GetHashCode() ?? 0
+                   ^ RefreshToken?.GetHashCode() ?? 0
+                   ^ ClientId?.GetHashCode() ?? 0
+                   ^ ClientSecret?.GetHashCode() ?? 0
+                   ^ Scope?.GetHashCode() ?? 0;
         }
     }
 }
