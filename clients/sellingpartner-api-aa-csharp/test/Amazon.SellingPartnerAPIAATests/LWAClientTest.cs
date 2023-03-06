@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
 
 using Amazon.SellingPartnerAPIAA;
 
 using Moq;
+using Moq.Contrib.HttpClient;
 
 using Newtonsoft.Json.Linq;
 
@@ -15,13 +17,11 @@ using Xunit;
 
 namespace Amazon.SellingPartnerAPIAATests
 {
-    public class LWAClientTest
+    public class LWAClientTest : IDisposable
     {
         private const string TestClientSecret = "cSecret";
         private const string TestClientId = "cId";
         private const string TestRefreshGrantType = "rToken";
-        private Mock<RestClient> mockRestClient;
-        private Mock<LWAAccessTokenRequestMetaBuilder> mockLWAAccessTokenRequestMetaBuilder;
 
         private static readonly Uri TestEndpoint = new Uri("https://www.amazon.com/lwa");
         private static readonly LWAAuthorizationCredentials LWAAuthorizationCredentials = new LWAAuthorizationCredentials
@@ -31,17 +31,25 @@ namespace Amazon.SellingPartnerAPIAATests
             RefreshToken = TestRefreshGrantType,
             Endpoint = TestEndpoint
         };
-        private static readonly IRestResponse Response = new RestResponse
-        {
-            StatusCode = HttpStatusCode.OK,
-            ResponseStatus = ResponseStatus.Completed,
-            Content = @"{access_token:'Azta|foo'}"
-        };
+
+        private static readonly string ResponseText = @"{access_token:'Azta|foo'}";
+        private static readonly string ResponseType = "application/json";
+
+        private Mock<LWAAccessTokenRequestMetaBuilder> mockLWAAccessTokenRequestMetaBuilder = new();
+        private Mock<HttpMessageHandler> mockHttpMessageHandler = new();
+        private RestClient restClient;
 
         public LWAClientTest()
         {
-            mockRestClient = new Mock<RestClient>();
-            mockLWAAccessTokenRequestMetaBuilder = new Mock<LWAAccessTokenRequestMetaBuilder>();
+            var httpClient = mockHttpMessageHandler.CreateClient();
+            httpClient.BaseAddress = new Uri(TestEndpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped));
+
+            restClient = new RestClient(httpClient);
+        }
+
+        public void Dispose()
+        {
+            restClient.Dispose();
         }
 
         [Fact]
@@ -52,9 +60,8 @@ namespace Amazon.SellingPartnerAPIAATests
         }
 
         [Fact]
-        public void MakeRequestFromMeta()
+        public async void MakeRequestFromMeta()
         {
-            IRestRequest request = new RestRequest();
             var expectedLWAAccessTokenRequestMeta = new LWAAccessTokenRequestMeta()
             {
                 ClientSecret = "expectedSecret",
@@ -63,25 +70,33 @@ namespace Amazon.SellingPartnerAPIAATests
                 GrantType = "expectedGrantType"
             };
 
-            mockRestClient.Setup(client => client.Execute(It.IsAny<IRestRequest>()))
-                .Callback((IRestRequest req) => { request = req; })
-                .Returns(Response);
+            HttpRequestMessage request = null!;
+            string requestBody = null!;
+            mockHttpMessageHandler.SetupAnyRequest()
+                .ReturnsResponse(HttpStatusCode.OK, ResponseText, ResponseType)
+                .Callback((HttpRequestMessage req, CancellationToken _) =>
+                {
+                    request = req;
+                    requestBody = req.Content!.ReadAsStringAsync(CancellationToken.None).Result;
+                });
 
             mockLWAAccessTokenRequestMetaBuilder.Setup(builder => builder.Build(LWAAuthorizationCredentials))
                 .Returns(expectedLWAAccessTokenRequestMeta);
 
-            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
-            lwaClientUnderTest.RestClient = mockRestClient.Object;
-            lwaClientUnderTest.LWAAccessTokenRequestMetaBuilder = mockLWAAccessTokenRequestMetaBuilder.Object;
-            lwaClientUnderTest.GetAccessToken();
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials)
+            {
+                RestClient = restClient,
+                LWAAccessTokenRequestMetaBuilder = mockLWAAccessTokenRequestMetaBuilder.Object
+            };
 
-            var requestBody = request.Parameters
-                .FirstOrDefault(parameter => parameter.Type.Equals(ParameterType.RequestBody));
+            await lwaClientUnderTest.GetAccessTokenAsync();
 
-            var jsonRequestBody = JObject.Parse(requestBody.Value.ToString());
+            Assert.NotNull(request);
+            Assert.Equal(HttpMethod.Post, request.Method);
 
-            Assert.Equal(Method.POST, request.Method);
-            Assert.Equal(TestEndpoint.AbsolutePath, request.Resource);
+            var jsonRequestBody = JObject.Parse(requestBody);
+
+            Assert.Equal(TestEndpoint.AbsolutePath, request.RequestUri!.AbsolutePath);
             Assert.Equal(expectedLWAAccessTokenRequestMeta.RefreshToken, jsonRequestBody.GetValue("refresh_token"));
             Assert.Equal(expectedLWAAccessTokenRequestMeta.GrantType, jsonRequestBody.GetValue("grant_type"));
             Assert.Equal(expectedLWAAccessTokenRequestMeta.ClientId, jsonRequestBody.GetValue("client_id"));
@@ -89,65 +104,48 @@ namespace Amazon.SellingPartnerAPIAATests
         }
 
         [Fact]
-        public void ReturnAccessTokenFromResponse()
+        public async void ReturnAccessTokenFromResponse()
         {
-            IRestRequest request = new RestRequest();
+            mockHttpMessageHandler.SetupAnyRequest()
+                .ReturnsResponse(HttpStatusCode.OK, ResponseText, ResponseType);
 
-            mockRestClient.Setup(client => client.Execute(It.IsAny<IRestRequest>()))
-                .Callback((IRestRequest req) => { request = req; })
-                .Returns(Response);
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials)
+            {
+                RestClient = restClient
+            };
 
-            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
-            lwaClientUnderTest.RestClient = mockRestClient.Object;
-
-            var accessToken = lwaClientUnderTest.GetAccessToken();
+            var accessToken = await lwaClientUnderTest.GetAccessTokenAsync();
 
             Assert.Equal("Azta|foo", accessToken);
         }
 
         [Fact]
-        public void UnsuccessfulPostThrowsException()
+        public async void UnsuccessfulPostThrowsException()
         {
-            IRestResponse response = new RestResponse
+            mockHttpMessageHandler.SetupAnyRequest()
+                .ReturnsResponse(HttpStatusCode.BadRequest);
+
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials)
             {
-                StatusCode = HttpStatusCode.BadRequest,
-                ResponseStatus = ResponseStatus.Completed,
-                Content = string.Empty
+                RestClient = restClient
             };
 
-            IRestRequest request = new RestRequest();
-
-            mockRestClient.Setup(client => client.Execute(It.IsAny<IRestRequest>()))
-               .Callback((IRestRequest req) => { request = req; })
-               .Returns(response);
-
-            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
-            lwaClientUnderTest.RestClient = mockRestClient.Object;
-
-            var systemException = Assert.Throws<SystemException>(() => lwaClientUnderTest.GetAccessToken());
-            Assert.IsType<IOException>(systemException.GetBaseException());
+            var systemException = await Assert.ThrowsAsync<SystemException>(() => lwaClientUnderTest.GetAccessTokenAsync());
+            Assert.IsType<IOException>(systemException.InnerException);
         }
 
         [Fact]
-        public void MissingAccessTokenInResponseThrowsException()
+        public async void MissingAccessTokenInResponseThrowsException()
         {
-            IRestResponse response = new RestResponse
+            mockHttpMessageHandler.SetupAnyRequest()
+                .ReturnsResponse(HttpStatusCode.OK);
+
+            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials)
             {
-                StatusCode = HttpStatusCode.OK,
-                ResponseStatus = ResponseStatus.Completed,
-                Content = string.Empty
+                RestClient = restClient
             };
 
-            IRestRequest request = new RestRequest();
-
-            mockRestClient.Setup(client => client.Execute(It.IsAny<RestRequest>()))
-               .Callback((IRestRequest req) => { request = (RestRequest)req; })
-               .Returns(response);
-
-            var lwaClientUnderTest = new LWAClient(LWAAuthorizationCredentials);
-            lwaClientUnderTest.RestClient = mockRestClient.Object;
-
-            Assert.Throws<SystemException>(() => lwaClientUnderTest.GetAccessToken());
+            await Assert.ThrowsAsync<SystemException>(() => lwaClientUnderTest.GetAccessTokenAsync());
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using RestSharp;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using RestSharp;
 
 namespace Amazon.SellingPartnerAPIAA
 {
@@ -21,10 +23,11 @@ namespace Amazon.SellingPartnerAPIAA
         /// Signs a request with LWA Access Token
         /// </summary>
         /// <param name="restRequest">Request to sign</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
         /// <returns>restRequest with LWA signature</returns>
-        public IRestRequest Sign(IRestRequest restRequest)
+        public async Task<RestRequest> SignAsync(RestRequest restRequest, CancellationToken cancellationToken = default)
         {
-            string accessToken = LWAClient.GetAccessToken();
+            string accessToken = await LWAClient.GetAccessTokenAsync(cancellationToken);
 
             restRequest.AddHeader(AccessTokenHeaderName, accessToken);
 

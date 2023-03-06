@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 using Amazon.SellingPartnerAPIAA;
@@ -37,7 +38,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters()
         {
-            IRestRequest request = new RestRequest(TestResourcePath, Method.GET);
+            var request = new RestRequest(TestResourcePath, Method.Get);
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
             Assert.Equal(Slash + TestResourcePath, result);
         }
@@ -45,7 +46,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters_UrlSegments()
         {
-            IRestRequest request = new RestRequest("products/pricing/v0/items/{Asin}/offers/{SellerSKU}", Method.GET);
+            var request = new RestRequest("products/pricing/v0/items/{Asin}/offers/{SellerSKU}", Method.Get);
             request.AddUrlSegment("Asin", "AB12CD3E4Z");
             request.AddUrlSegment("SellerSKU", "1234567890");
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
@@ -55,7 +56,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters_IncorrectUrlSegment()
         {
-            IRestRequest request = new RestRequest("products/pricing/v0/items/{Asin}/offers", Method.GET);
+            var request = new RestRequest("products/pricing/v0/items/{Asin}/offers", Method.Get);
             request.AddUrlSegment("asin", "AB12CD3E4Z");
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
             Assert.Equal("/products/pricing/v0/items/%257BAsin%257D/offers", result);
@@ -64,7 +65,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters_ResourcePathWithSpace()
         {
-            IRestRequest request = new RestRequest("iam/ user", Method.GET);
+            var request = new RestRequest("iam/ user", Method.Get);
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
             Assert.Equal("/iam/%2520user", result);
         }
@@ -72,7 +73,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters_EmptyResourcePath()
         {
-            IRestRequest request = new RestRequest(string.Empty, Method.GET);
+            var request = new RestRequest(string.Empty, Method.Get);
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
             Assert.Equal(Slash, result);
         }
@@ -87,7 +88,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalURIParameters_SlashPath()
         {
-            IRestRequest request = new RestRequest(Slash, Method.GET);
+            var request = new RestRequest(Slash, Method.Get);
             var result = awsSignerHelperUnderTest.ExtractCanonicalURIParameters(request);
             Assert.Equal(Slash, result);
         }
@@ -95,7 +96,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalQueryString()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             request.AddQueryParameter("Version", "2010-05-08");
             request.AddQueryParameter("Action", "ListUsers");
             request.AddQueryParameter("RequestId", "1");
@@ -115,7 +116,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalQueryString_WithUrlEncoding()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             request.AddQueryParameter("Action^", "ListUsers$Roles");
             var result = awsSignerHelperUnderTest.ExtractCanonicalQueryString(request);
             Assert.Equal("Action%5E=ListUsers%24Roles", result);
@@ -124,7 +125,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractCanonicalHeaders()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             request.AddHeader("X-Amz-Date", "20150830T123600Z");
             request.AddHeader("Host", "iam.amazonaws.com");
             request.AddHeader("Content-Type", JsonMediaType);
@@ -144,7 +145,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestExtractSignedHeaders()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             request.AddHeader("X-Amz-Date", "20150830T123600Z");
             request.AddHeader("Host", "iam.amazonaws.com");
             request.AddHeader("Content-Type", JsonMediaType);
@@ -163,7 +164,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestHashRequestBody()
         {
-            IRestRequest request = new RestRequest(TestResourcePath, Method.POST);
+            var request = new RestRequest(TestResourcePath, Method.Post);
             request.AddJsonBody("{\"test\":\"payload\"}");
 
             var result = awsSignerHelperUnderTest.HashRequestBody(request);
@@ -182,8 +183,8 @@ namespace Amazon.SellingPartnerAPIAATests
         {
             var expectedCanonicalHash = "foo";
             var expectedStringBuilder = new StringBuilder();
-            expectedStringBuilder.AppendLine("AWS4-HMAC-SHA256");
-            expectedStringBuilder.AppendLine(ISOSigningDateTime);
+            expectedStringBuilder.Append("AWS4-HMAC-SHA256\n");
+            expectedStringBuilder.Append(ISOSigningDateTime).Append("\n");
             expectedStringBuilder.AppendFormat("{0}/{1}/execute-api/aws4_request\n", ISOSigningDate, TestRegion);
             expectedStringBuilder.Append(expectedCanonicalHash);
 
@@ -201,10 +202,10 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestInitializeHeadersSetsUtcNowXAmzDateHeader()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             awsSignerHelperUnderTest.InitializeHeaders(request, TestHost);
 
-            var actualParameter = request.Parameters.Find(parameter =>
+            var actualParameter = request.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == AWSSignerHelper.XAmzDateHeaderName);
 
             Assert.Equal(ISOSigningDateTime, actualParameter.Value);
@@ -213,12 +214,12 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestInitializeHeadersOverwritesXAmzDateHeader()
         {
-            IRestRequest request = new RestRequest();
+            var request = new RestRequest();
             request.AddHeader(AWSSignerHelper.XAmzDateHeaderName, "foobar");
 
             awsSignerHelperUnderTest.InitializeHeaders(request, TestHost);
 
-            var actualParameter = request.Parameters.Find(parameter =>
+            var actualParameter = request.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == AWSSignerHelper.XAmzDateHeaderName);
 
             Assert.Equal(ISOSigningDateTime, actualParameter.Value);
@@ -227,7 +228,7 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestAddSignatureToRequest()
         {
-            IRestRequest restRequest = new RestRequest();
+            var restRequest = new RestRequest();
             var expectedAccessKeyId = TestAccessKeyId;
             var expectedRegion = TestRegion;
             var expectedSignature = "testCalculatedSignature";
@@ -248,7 +249,7 @@ namespace Amazon.SellingPartnerAPIAATests
                                                   expectedRegion,
                                                   SigningDate);
 
-            var actualParameter = restRequest.Parameters.Find(parameter =>
+            var actualParameter = restRequest.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == AWSSignerHelper.AuthorizationHeaderName);
 
             Assert.Equal(expectedAuthorizationHeaderValue, actualParameter.Value);
@@ -267,11 +268,11 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestInitializeHeadersSetsHostHeader()
         {
-            IRestRequest restRequest = new RestRequest();
+            var restRequest = new RestRequest();
 
             awsSignerHelperUnderTest.InitializeHeaders(restRequest, TestHost);
 
-            var actualParamter = restRequest.Parameters.Find(parameter =>
+            var actualParamter = restRequest.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == AWSSignerHelper.HostHeaderName);
 
             Assert.Equal(TestHost, actualParamter.Value);
@@ -280,13 +281,13 @@ namespace Amazon.SellingPartnerAPIAATests
         [Fact]
         public void TestInitializeHeadersOverwritesHostHeader()
         {
-            IRestRequest restRequest = new RestRequest();
+            var restRequest = new RestRequest();
 
             restRequest.AddHeader(AWSSignerHelper.HostHeaderName, "foobar");
 
             awsSignerHelperUnderTest.InitializeHeaders(restRequest, TestHost);
 
-            var actualParamter = restRequest.Parameters.Find(parameter =>
+            var actualParamter = restRequest.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == AWSSignerHelper.HostHeaderName);
 
             Assert.Equal(TestHost, actualParamter.Value);

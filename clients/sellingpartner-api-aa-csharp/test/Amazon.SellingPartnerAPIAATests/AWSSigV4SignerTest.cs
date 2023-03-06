@@ -24,7 +24,7 @@ namespace Amazon.SellingPartnerAPIAATests
 
         public AWSSigV4SignerTest()
         {
-            request = new RestRequest(TestResourcePath, Method.GET);
+            request = new RestRequest(TestResourcePath);
 
             var authenticationCredentials = new AWSAuthenticationCredentials
             {

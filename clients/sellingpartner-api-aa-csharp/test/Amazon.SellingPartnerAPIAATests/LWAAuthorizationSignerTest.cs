@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Threading;
 
 using Amazon.SellingPartnerAPIAA;
 
@@ -33,18 +35,18 @@ namespace Amazon.SellingPartnerAPIAATests
         }
 
         [Fact]
-        public void RequestIsSignedFromLWAClientProvidedToken()
+        public async void RequestIsSignedFromLWAClientProvidedToken()
         {
             var expectedAccessToken = "foo";
 
             var mockLWAClient = new Mock<LWAClient>(LWAAuthorizationCredentials);
-            mockLWAClient.Setup(lwaClient => lwaClient.GetAccessToken()).Returns(expectedAccessToken);
+            mockLWAClient.Setup(lwaClient => lwaClient.GetAccessTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expectedAccessToken);
             lwaAuthorizationSignerUnderTest.LWAClient = mockLWAClient.Object;
 
-            IRestRequest restRequest = new RestRequest();
-            restRequest = lwaAuthorizationSignerUnderTest.Sign(restRequest);
+            var restRequest = new RestRequest();
+            restRequest = await lwaAuthorizationSignerUnderTest.SignAsync(restRequest);
 
-            var actualAccessTokenHeader = restRequest.Parameters.Find(parameter =>
+            var actualAccessTokenHeader = restRequest.Parameters.Single(parameter =>
                 ParameterType.HttpHeader.Equals(parameter.Type) && parameter.Name == LWAAuthorizationSigner.AccessTokenHeaderName);
 
             Assert.Equal(expectedAccessToken, actualAccessTokenHeader.Value);
