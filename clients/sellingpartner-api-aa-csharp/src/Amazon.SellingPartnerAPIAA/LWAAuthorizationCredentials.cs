@@ -13,22 +13,22 @@ namespace Amazon.SellingPartnerAPIAA
         /**
          * LWA Client Id
          */
-        public string ClientId { get; set; }
+        public string? ClientId { get; set; }
 
         /**
          * LWA Client Secret
          */
-        public string ClientSecret { get; set; }
+        public string? ClientSecret { get; set; }
 
         /**
          * LWA Refresh Token
          */
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         /**
          * LWA Authorization Server Endpoint
          */
-        public Uri Endpoint { get; set; }
+        public Uri? Endpoint { get; set; }
 
         /**
          * LWA Authorization Scopes

@@ -34,20 +34,24 @@ namespace Amazon.SellingPartnerAPIAA
 
             string hashedCanonicalRequest = CreateCanonicalRequest(request, signedHeaders);
 
+            var region = awsCredentials.Region ?? throw new InvalidOperationException("Region is not set");
+            var secretKey = awsCredentials.SecretKey ?? throw new InvalidOperationException("SecretKey is not set");
+            var accessKeyId = awsCredentials.AccessKeyId ?? throw new InvalidOperationException("AccessKeyId is not set");
+
             string stringToSign = AwsSignerHelper.BuildStringToSign(signingDate,
                                                                     hashedCanonicalRequest,
-                                                                    awsCredentials.Region);
+                                                                    region);
 
             string signature = AwsSignerHelper.CalculateSignature(stringToSign,
                                                                   signingDate,
-                                                                  awsCredentials.SecretKey,
-                                                                  awsCredentials.Region);
+                                                                  secretKey,
+                                                                  region);
 
             AwsSignerHelper.AddSignature(request,
-                                         awsCredentials.AccessKeyId,
+                                         accessKeyId,
                                          signedHeaders,
                                          signature,
-                                         awsCredentials.Region,
+                                         region,
                                          signingDate);
 
             return request;

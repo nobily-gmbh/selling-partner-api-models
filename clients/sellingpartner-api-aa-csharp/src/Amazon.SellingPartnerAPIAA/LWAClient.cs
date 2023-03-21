@@ -28,14 +28,15 @@ namespace Amazon.SellingPartnerAPIAA
         }
 
         public LWAAccessTokenRequestMetaBuilder LWAAccessTokenRequestMetaBuilder { get; set; }
-        public LWAAuthorizationCredentials LWAAuthorizationCredentials { get; private set; }
+        public LWAAuthorizationCredentials LWAAuthorizationCredentials { get; }
 
 
         public LWAClient(LWAAuthorizationCredentials lwaAuthorizationCredentials)
         {
             LWAAuthorizationCredentials = lwaAuthorizationCredentials;
             LWAAccessTokenRequestMetaBuilder = new LWAAccessTokenRequestMetaBuilder();
-            RestClient = new RestClient(LWAAuthorizationCredentials.Endpoint.GetLeftPart(UriPartial.Authority));
+            _restClient = new RestClient(LWAAuthorizationCredentials.Endpoint!.GetLeftPart(UriPartial.Authority));
+            _restClient.UseNewtonsoftJson();
         }
 
         /// <summary>
@@ -46,10 +47,9 @@ namespace Amazon.SellingPartnerAPIAA
         public virtual async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
         {
             LWAAccessTokenRequestMeta lwaAccessTokenRequestMeta = LWAAccessTokenRequestMetaBuilder.Build(LWAAuthorizationCredentials);
-            var accessTokenRequest = new RestRequest(LWAAuthorizationCredentials.Endpoint.AbsolutePath, Method.Post);
+            var accessTokenRequest = new RestRequest(LWAAuthorizationCredentials.Endpoint!.AbsolutePath, Method.Post);
 
-            string jsonRequestBody = JsonConvert.SerializeObject(lwaAccessTokenRequestMeta);
-
+            // string jsonRequestBody = JsonConvert.SerializeObject(lwaAccessTokenRequestMeta);
             // accessTokenRequest.AddParameter(JsonMediaType, jsonRequestBody, ParameterType.RequestBody);
             accessTokenRequest.AddJsonBody(lwaAccessTokenRequestMeta);
 
@@ -63,9 +63,20 @@ namespace Amazon.SellingPartnerAPIAA
                     throw new IOException("Unsuccessful LWA token exchange", response.ErrorException);
                 }
 
+                if (response.Content == null)
+                {
+                    throw new SystemException("Error getting LWA Access Token - no access token returned");
+                }
+
                 var responseJson = JObject.Parse(response.Content);
 
-                accessToken = responseJson.GetValue(AccessTokenKey)?.ToString();
+                var returnedAccessToken = responseJson.GetValue(AccessTokenKey)?.ToString();
+                if (string.IsNullOrEmpty(returnedAccessToken))
+                {
+                    throw new SystemException("Error getting LWA Access Token - no access token returned");
+                }
+
+                accessToken = returnedAccessToken!;
             }
             catch (Exception e)
             {

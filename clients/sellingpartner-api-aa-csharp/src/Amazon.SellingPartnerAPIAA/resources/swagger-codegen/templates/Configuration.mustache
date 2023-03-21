@@ -108,11 +108,7 @@ namespace {{packageName}}.Client
         /// </summary>
         public Configuration()
         {
-            UserAgent = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{packageVersion}}/csharp{{/httpUserAgent}}";
             BasePath = "{{{basePath}}}";
-            DefaultHeader = new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>();
-            ApiKey = new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>();
-            ApiKeyPrefix = new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>();
         }
 
         /// <summary>
@@ -224,7 +220,7 @@ namespace {{packageName}}.Client
                 _basePath = value;
                 // pass-through to ApiClient if it's set.
                 if(_apiClient != null) {
-                    _apiClient.RestClient.BaseUrl = new Uri(_basePath);
+                    _apiClient.RestClient{{^netStandard}}.Options{{/netStandard}}.BaseUrl = new Uri(_basePath);
                 }
             }
         }
@@ -232,7 +228,7 @@ namespace {{packageName}}.Client
         /// <summary>
         /// Gets or sets the default header.
         /// </summary>
-        public virtual IDictionary<string, string> DefaultHeader { get; set; }
+        public virtual IDictionary<string, string> DefaultHeader { get; set; } = new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>();
 
         /// <summary>
         /// Gets or sets the HTTP timeout (milliseconds) of ApiClient. Default to 100000 milliseconds.
@@ -241,15 +237,15 @@ namespace {{packageName}}.Client
         {
             {{#netStandard}}get { return (int)ApiClient.RestClient.Timeout.GetValueOrDefault(TimeSpan.FromSeconds(0)).TotalMilliseconds; }
             set { ApiClient.RestClient.Timeout = TimeSpan.FromMilliseconds(value); }{{/netStandard}}{{^netStandard}}
-            get { return ApiClient.RestClient.Timeout; }
-            set { ApiClient.RestClient.Timeout = value; }{{/netStandard}}
+            get { return ApiClient.RestClient.Options.Timeout; }
+            set { ApiClient.RestClient.Options.Timeout = value; }{{/netStandard}}
         }
 
         /// <summary>
         /// Gets or sets the HTTP user agent.
         /// </summary>
         /// <value>Http user agent.</value>
-        public virtual string UserAgent { get; set; }
+        public virtual string UserAgent { get; set; } = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{packageVersion}}/csharp{{/httpUserAgent}}";
 
         /// <summary>
         /// Gets or sets the username (HTTP basic authentication).
@@ -288,13 +284,10 @@ namespace {{packageName}}.Client
         /// <returns>API key with prefix.</returns>
         public string GetApiKeyWithPrefix(string apiKeyIdentifier)
         {
-            var apiKeyValue = "";
-            ApiKey.TryGetValue (apiKeyIdentifier, out apiKeyValue);
-            var apiKeyPrefix = "";
-            if (ApiKeyPrefix.TryGetValue (apiKeyIdentifier, out apiKeyPrefix))
+            ApiKey.TryGetValue (apiKeyIdentifier, out var apiKeyValue);
+            if (ApiKeyPrefix.TryGetValue (apiKeyIdentifier, out var apiKeyPrefix))
                 return apiKeyPrefix + " " + apiKeyValue;
-            else
-                return apiKeyValue;
+            return apiKeyValue!;
         }
 
         /// <summary>
@@ -370,7 +363,7 @@ namespace {{packageName}}.Client
         /// <value>The prefix of the API key.</value>
         public virtual IDictionary<string, string> ApiKeyPrefix
         {
-            get { return _apiKeyPrefix; }
+            get { return _apiKeyPrefix ??= new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>(); }
             set
             {
                 if (value == null)
@@ -387,7 +380,7 @@ namespace {{packageName}}.Client
         /// <value>The API key.</value>
         public virtual IDictionary<string, string> ApiKey
         {
-            get { return _apiKey; }
+            get { return _apiKey ??= new {{^net35}}Concurrent{{/net35}}Dictionary<string, string>(); }
             set
             {
                 if (value == null)

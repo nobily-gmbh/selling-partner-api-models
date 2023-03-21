@@ -59,7 +59,7 @@ namespace Amazon.SellingPartnerAPIAA
                 }
                 IDictionary<string, string> pathParameters = request.Parameters
                         .Where(parameter => ParameterType.UrlSegment.Equals(parameter.Type))
-                        .ToDictionary(parameter => parameter.Name.Trim().ToString(), parameter => parameter.Value.ToString());
+                        .ToDictionary(parameter => parameter.Name!.Trim().ToString(), parameter => parameter.Value!.ToString());
 
                 // Replace path parameter with actual value.
                 // Ex: /products/pricing/v0/items/{Asin}/offers -> /products/pricing/v0/items/AB12CD3E4Z/offers
@@ -90,7 +90,7 @@ namespace Amazon.SellingPartnerAPIAA
         {
             IDictionary<string, string> queryParameters = request.Parameters
                 .Where(parameter => ParameterType.QueryString.Equals(parameter.Type))
-                .ToDictionary(parameter => parameter.Name.Trim().ToString(), parameter => parameter.Value.ToString());
+                .ToDictionary(parameter => parameter.Name!.Trim().ToString(), parameter => parameter.Value!.ToString());
 
             SortedDictionary<string, string> sortedQueryParameters = new SortedDictionary<string, string>(queryParameters);
 
@@ -118,7 +118,7 @@ namespace Amazon.SellingPartnerAPIAA
         {
             IDictionary<string, string> headers = request.Parameters
                 .Where(parameter => ParameterType.HttpHeader.Equals(parameter.Type))
-                .ToDictionary(header => header.Name.Trim().ToLowerInvariant(), header => header.Value.ToString());
+                .ToDictionary(header => header.Name!.Trim().ToLowerInvariant(), header => header.Value!.ToString());
 
             SortedDictionary<string, string> sortedHeaders = new SortedDictionary<string, string>(headers);
 
@@ -142,7 +142,7 @@ namespace Amazon.SellingPartnerAPIAA
         public virtual string ExtractSignedHeaders(RestRequest request)
         {
             List<string> rawHeaders = request.Parameters.Where(parameter => ParameterType.HttpHeader.Equals(parameter.Type))
-                                                        .Select(header => header.Name.Trim().ToLowerInvariant())
+                                                        .Select(header => header.Name!.Trim().ToLowerInvariant())
                                                         .ToList();
             rawHeaders.Sort(StringComparer.OrdinalIgnoreCase);
 
@@ -157,7 +157,7 @@ namespace Amazon.SellingPartnerAPIAA
         public virtual string HashRequestBody(RestRequest request)
         {
             var body = request.Parameters.FirstOrDefault(parameter => ParameterType.RequestBody.Equals(parameter.Type));
-            string value = body != null ? body.Value.ToString() : string.Empty;
+            string value = body != null ? body.Value!.ToString() : string.Empty;
             return Utils.ToHex(Utils.Hash(value));
         }
 
